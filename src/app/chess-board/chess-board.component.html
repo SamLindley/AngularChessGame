@@ -1,5 +1,5 @@
 <div class="board">
-  <div *ngFor="let square of squares" >
-    <app-square [square]="square" ></app-square>
+  <div *ngFor="let key of objectKeys(boardState)" >
+    <app-square [square]="boardState[key]" (squareClicked)="onSquareClicked(boardState[key])"></app-square>
   </div>
 </div>

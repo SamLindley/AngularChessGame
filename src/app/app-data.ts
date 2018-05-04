@@ -29,5 +29,6 @@ export const PieceData = {
 export const Colors = {
   BLACK: 'grey',
   WHITE: 'white',
-}
+  SELECTED: 'yellow'
+};
 

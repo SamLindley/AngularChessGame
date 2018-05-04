@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Square} from '../../models/square.model';
 
 @Component({
@@ -8,6 +8,7 @@ import {Square} from '../../models/square.model';
 })
 export class SquareComponent implements OnInit {
   @Input() square: Square;
+  @Output() squareClicked = new EventEmitter();
 
   constructor() { }
 
@@ -15,6 +16,6 @@ export class SquareComponent implements OnInit {
   }
 
   onSquareClick() {
-    console.log(this.square);
+    this.squareClicked.emit();
   }
 }
