@@ -12,6 +12,7 @@ import {PieceImageData, PieceData, Colors, relativePath} from '../app-data';
 export class ChessBoardComponent implements OnInit {
 
   squares: Square[] = [];
+  boardState = {};
   squareColorTracker: string;
 
   static assignSquare(counter, coordinates, squareColor) {
@@ -68,7 +69,7 @@ export class ChessBoardComponent implements OnInit {
   setUpBoardAsWhite() {
     let counter = 1;
     this.squareColorTracker = Colors.BLACK;
-    for (let y = 1; y < 9; y++) {
+    for (let y = 8; y > 0; y--) {
       this.squareColorTracker === Colors.BLACK ? this.squareColorTracker = Colors.WHITE : this.squareColorTracker = Colors.BLACK;
       for (let x = 1; x < 9; x++) {
         const coordinates = new Coordinates(x, y);
