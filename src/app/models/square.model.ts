@@ -9,6 +9,7 @@ export class Square {
     public isOccupied: boolean,
     public pieceColor: string,
     public pieceType: number,
-    public elligibleToMoveTo: boolean
+    public pieceHasMoved: boolean,
+    public isEligibleToMoveTo: boolean
   ) {}
 }

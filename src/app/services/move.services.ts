@@ -96,21 +96,19 @@ function getTheoreticalKnightMoves(coordinates: Coordinates): Coordinates[] {
   return moves;
 }
 
-export function getTheoreticalPawnMoves(coordinates: Coordinates, hasMoved: boolean, color: string): Coordinates[] {
+function getTheoreticalPawnMoves(coordinates: Coordinates, hasMoved: boolean, color: string): Coordinates[] {
   const moves: Coordinates[] = [];
   const x = coordinates.x;
   const y = coordinates.y;
   if (color === Colors.WHITE) {
     moves.push(new Coordinates(x, y + 1));
-    moves.push(new Coordinates(x - 1, y + 1));
-    moves.push(new Coordinates(x + 1, y + 1));
+
     if (!hasMoved) {
       moves.push(new Coordinates(x, y + 2));
     }
   } else {
     moves.push(new Coordinates(x, y - 1));
-    moves.push(new Coordinates(x - 1, y - 1));
-    moves.push(new Coordinates(x + 1, y - 1));
+
     if (!hasMoved) {
       moves.push(new Coordinates(x, y - 2));
     }
@@ -118,8 +116,39 @@ export function getTheoreticalPawnMoves(coordinates: Coordinates, hasMoved: bool
   return moves;
 }
 
-function isHostile(selectedSquare, destination) {
-  return selectedSquare.pieceColor !== destination.pieceColor;
+function getTheoreticalPawnAttacks(coordinates: Coordinates, color: string) {
+  const moves: Coordinates[] = [];
+  const x = coordinates.x;
+  const y = coordinates.y;
+  if (color === Colors.WHITE) {
+    moves.push(new Coordinates(x - 1, y + 1));
+    moves.push(new Coordinates(x + 1, y + 1));
+  } else {
+    moves.push(new Coordinates(x - 1, y - 1));
+    moves.push(new Coordinates(x + 1, y - 1));
+  }
+  return moves;
+}
+
+export function getMovesForPawn(selectedSquare: Square, boardState) {
+  const potentialMoves = getTheoreticalPawnMoves(selectedSquare.coordinate, selectedSquare.pieceHasMoved, selectedSquare.pieceColor);
+  const potentialAttacks = getTheoreticalPawnAttacks(selectedSquare.coordinate, selectedSquare.pieceColor);
+  const legalMoves = [];
+  potentialMoves.forEach(move => {
+    const coordinateKey = move.x + ' ' + move.y;
+    const square = boardState[coordinateKey];
+    if (isWithinBounds(move) && !square.isOccupied) {
+      legalMoves.push(coordinateKey);
+    }
+  });
+  potentialAttacks.forEach(move => {
+    const coordinateKey = move.x + ' ' + move.y;
+    const square = boardState[coordinateKey];
+    if (isWithinBounds(move) && square.isOccupied && isHostile(selectedSquare, square)) {
+      legalMoves.push(coordinateKey);
+    }
+  });
+  return legalMoves;
 }
 
 export function getMovesForKing(selectedSquare: Square, boardState) {
@@ -289,4 +318,22 @@ function getAllDiagonalMoves(selectedSquare: Square, boardState) {
 
 function isWithinBounds(coordinates: Coordinates) {
   return coordinates.y > 0 && coordinates.y < 9 && coordinates.x > 0 && coordinates.x < 9;
+}
+
+function isHostile(selectedSquare, destination) {
+  return selectedSquare.pieceColor !== destination.pieceColor;
+}
+
+function filterMovesForBQR(selectedSquare: Square, boardState, moves, filteredMoves) {
+  moves.some(move => {
+    const coordinateKey = move.x + ' ' + move.y;
+    if (isWithinBounds(move) && boardState[coordinateKey].isOccupied) {
+      if (isHostile(selectedSquare, boardState[coordinateKey])) {
+        filteredMoves.push(coordinateKey);
+      }
+      return true;
+    } else if (isWithinBounds(move)) {
+      filteredMoves.push(coordinateKey);
+    }
+  });
 }

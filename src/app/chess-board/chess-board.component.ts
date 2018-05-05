@@ -2,7 +2,14 @@ import {Component, OnInit} from '@angular/core';
 import {Square} from '../models/square.model';
 import {Coordinates} from '../models/coordinates.model';
 import {PieceImageData, PieceData, Colors, relativePath} from '../app-data';
-import {getMovesForBishop, getMovesForKing, getMovesForKnight, getMovesForQueen, getMovesForRook} from '../services/move.services';
+import {
+  getMovesForBishop,
+  getMovesForKing,
+  getMovesForKnight,
+  getMovesForPawn,
+  getMovesForQueen,
+  getMovesForRook
+} from '../services/move.services';
 
 
 @Component({
@@ -13,66 +20,70 @@ import {getMovesForBishop, getMovesForKing, getMovesForKnight, getMovesForQueen,
 export class ChessBoardComponent implements OnInit {
 
   objectKeys = Object.keys;
-  squares: Square[] = [];
-  occupiedSquares: string[] = [];
+
+  // used to allow looping through the boardState object
+  squareKeys: string[] = [];
+
   boardState = {};
   squareColorTracker: string;
   turn = Colors.WHITE;
-  squareSelected;
+  squareSelected: Square;
   legalMoves = [];
+  placeHolderSquare: Square = new Square(null, null, null, null,
+    false, null, null, false, false);
+  hasMovedTracker: boolean;
   gameState;
 
 
   assignSquare(counter, coordinates, squareColor) {
     const coordinateString = coordinates.x + ' ' + coordinates.y;
-    if ((counter > 0 && counter < 17) || counter > 48) {
-      this.occupiedSquares.push(coordinateString);
-    }
+
+    this.squareKeys.push(coordinateString);
+
     if (counter === 1 || counter === 8) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.BLACK_ROOK,
-        true, Colors.BLACK, PieceData.ROOK, false);
+        true, Colors.BLACK, PieceData.ROOK, false, false);
     } else if (counter === 2 || counter === 7) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.BLACK_KNIGHT,
-        true, Colors.BLACK, PieceData.KNIGHT, false);
+        true, Colors.BLACK, PieceData.KNIGHT, false, false);
     } else if (counter === 3 || counter === 6) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.BLACK_BISHOP,
-        true, Colors.BLACK, PieceData.BISHOP, false);
+        true, Colors.BLACK, PieceData.BISHOP, false, false);
     } else if (counter === 4) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.BLACK_QUEEN,
-        true, Colors.BLACK, PieceData.QUEEN, false);
+        true, Colors.BLACK, PieceData.QUEEN, false, false);
     } else if (counter === 5) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.BLACK_KING,
-        true, Colors.BLACK, PieceData.KING, false);
+        true, Colors.BLACK, PieceData.KING, false, false);
     } else if (counter > 8 && counter < 17) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.BLACK_PAWN,
-        true, Colors.BLACK, PieceData.PAWN, false);
+        true, Colors.BLACK, PieceData.PAWN, false, false);
     } else if (counter > 48 && counter < 57) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.WHITE_PAWN,
-        true, Colors.WHITE, PieceData.PAWN, false);
+        true, Colors.WHITE, PieceData.PAWN, false, false);
     } else if (counter === 57 || counter === 64) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.WHITE_ROOK,
-        true, Colors.WHITE, PieceData.ROOK, false);
+        true, Colors.WHITE, PieceData.ROOK, false, false);
     } else if (counter === 58 || counter === 63) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.WHITE_KNIGHT,
-        true, Colors.WHITE, PieceData.KNIGHT, false);
+        true, Colors.WHITE, PieceData.KNIGHT, false, false);
     } else if (counter === 59 || counter === 62) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.WHITE_BISHOP,
-        true, Colors.WHITE, PieceData.BISHOP, false);
+        true, Colors.WHITE, PieceData.BISHOP, false, false);
     } else if (counter === 60) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.WHITE_QUEEN,
-        true, Colors.WHITE, PieceData.QUEEN, false);
+        true, Colors.WHITE, PieceData.QUEEN, false, false);
     } else if (counter === 61) {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, relativePath + PieceImageData.WHITE_KING,
-        true, Colors.WHITE, PieceData.KING, false);
+        true, Colors.WHITE, PieceData.KING, false, false);
     } else {
       this.boardState[coordinateString] = new Square(coordinates, squareColor, squareColor, null,
-        false, null, null, false);
+        false, null, null, false, false);
     }
   }
 
   constructor() {
     this.setUpBoardAsWhite();
-    console.log(this.occupiedSquares);
   }
 
   ngOnInit() {
@@ -95,40 +106,146 @@ export class ChessBoardComponent implements OnInit {
 
 
   onSquareClicked(square) {
+    console.log(square);
     if (this.squareSelected) {
       this.squareSelected.squareColor = this.squareSelected.squareColorSaver;
     }
 
+
+    if (square.isEligibleToMoveTo) {
+      if (this.moveWillSelfCheck(this.squareSelected, square)) {
+        return;
+      }
+      this.movePiece(this.squareSelected, square);
+      this.isCheck();
+      this.endTurn();
+    }
+    this.resetPossibleMoves();
     this.squareSelected = square;
 
-
     if (this.squareSelected.isOccupied && this.squareSelected.pieceColor === this.turn) {
+
+      this.legalMoves = [];
       this.squareSelected.squareColor = Colors.SELECTED;
-      this.findPossibleMoves(this.squareSelected);
+      this.legalMoves = this.findPossibleMoves(this.squareSelected);
+      this.assignSquaresAsEligibleForMove();
     }
+  }
+
+  private moveWillSelfCheck(squareSelected: Square, square: Square) {
+    let isCheck = false;
+
+    this.movePieceLogically(squareSelected, square);
+
+    this.squareKeys.forEach(squareKey => {
+      if (this.boardState[squareKey].isOccupied && this.boardState[squareKey].pieceColor !== this.turn) {
+        const moves = this.findPossibleMoves(this.boardState[squareKey]);
+        moves.forEach(move => {
+          if (this.boardState[move].pieceType === PieceData.KING) {
+            isCheck = true;
+          }
+        });
+      }
+    });
+    this.undoMovePieceLogically(squareSelected, square);
+    return isCheck;
+
   }
 
   findPossibleMoves(square) {
-    this.legalMoves = [];
     switch (square.pieceType) {
       case PieceData.PAWN:
-        this.legalMoves = [];
-        break;
+        return getMovesForPawn(square, this.boardState);
       case PieceData.KNIGHT:
-        this.legalMoves = getMovesForKnight(square, this.boardState);
-        break;
+        return getMovesForKnight(square, this.boardState);
       case PieceData.BISHOP:
-        this.legalMoves = getMovesForBishop(square, this.boardState);
-        break;
+        return getMovesForBishop(square, this.boardState);
       case PieceData.ROOK:
-        this.legalMoves = getMovesForRook(square, this.boardState);
-        break;
+        return getMovesForRook(square, this.boardState);
       case PieceData.QUEEN:
-        this.legalMoves = getMovesForQueen(square, this.boardState);
-        break;
+        return getMovesForQueen(square, this.boardState);
       case PieceData.KING:
-        this.legalMoves = getMovesForKing(square, this.boardState);
+        return getMovesForKing(square, this.boardState);
     }
-    console.log(this.legalMoves);
+  }
+
+  assignSquaresAsEligibleForMove() {
+    this.legalMoves.forEach(move => {
+      this.boardState[move].isEligibleToMoveTo = true;
+    });
+  }
+
+  movePiece(mover: Square, destination: Square) {
+    this.movePieceLogically(mover, destination);
+    this.movePieceVisually(mover, destination);
+  }
+
+  private movePieceVisually(mover: Square, destination: Square) {
+    destination.imagePath = mover.imagePath;
+    mover.imagePath = null;
+  }
+
+  private movePieceLogically(mover: Square, destination: Square) {
+    this.hasMovedTracker = mover.pieceHasMoved;
+
+    this.placeHolderSquare.pieceColor = destination.pieceColor;
+    this.placeHolderSquare.pieceType = destination.pieceType;
+    this.placeHolderSquare.pieceHasMoved = destination.pieceHasMoved;
+    this.placeHolderSquare.isOccupied = destination.isOccupied;
+
+    destination.pieceColor = mover.pieceColor;
+    destination.pieceType = mover.pieceType;
+    destination.isOccupied = true;
+    destination.pieceHasMoved = true;
+
+    console.log(mover.pieceColor);
+
+    mover.pieceType = PieceData.EMPTY;
+    mover.isOccupied = false;
+    mover.pieceColor = null;
+  }
+
+  private undoMovePieceLogically(mover: Square, destination: Square) {
+    mover.pieceType = destination.pieceType;
+    mover.isOccupied = true;
+    mover.pieceColor = destination.pieceColor;
+    mover.pieceHasMoved = this.hasMovedTracker;
+
+    destination.pieceColor = this.placeHolderSquare.pieceColor;
+    destination.pieceType = this.placeHolderSquare.pieceType;
+    destination.pieceHasMoved = this.placeHolderSquare.pieceHasMoved;
+    destination.isOccupied = this.placeHolderSquare.isOccupied;
+  }
+
+  resetPossibleMoves() {
+    this.legalMoves.forEach(move => {
+      this.boardState[move].isEligibleToMoveTo = false;
+    });
+  }
+
+  endTurn() {
+    if (this.turn === Colors.WHITE) {
+      this.turn = Colors.BLACK;
+    } else {
+      this.turn = Colors.WHITE;
+    }
+  }
+
+  isCheck() {
+    let isCheck = false;
+    this.squareKeys.forEach(square => {
+      if (this.boardState[square].isOccupied && this.boardState[square].pieceColor === this.turn) {
+        const moves = this.findPossibleMoves(this.boardState[square]);
+        moves.forEach(move => {
+          if (this.boardState[move].pieceType === PieceData.KING) {
+            isCheck = true;
+          }
+        });
+      }
+    });
+    console.log(isCheck);
+    return isCheck;
   }
 }
+
+
