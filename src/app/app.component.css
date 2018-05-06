@@ -1,0 +1,15 @@
+.site-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chess-container {
+  display: flex;
+}
+
+.statusBar {
+  height: 800px;
+  flex: 1;
+  background: black;
+}

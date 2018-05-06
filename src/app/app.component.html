@@ -1,2 +1,18 @@
-<app-chess-board></app-chess-board>
+<app-header></app-header>
+<div class="site-container">
+
+  <div *ngIf="gameStatus === 'idle'">
+    <button (click)="findGame()">Find Game</button>
+  </div>
+
+  <div *ngIf="gameStatus === 'waiting'">
+    WAITING
+  </div>
+
+  <div class="chess-container" *ngIf="gameStatus === 'gameStart'">
+    <app-chess-board ></app-chess-board>
+  </div>
+
+</div>
+
 

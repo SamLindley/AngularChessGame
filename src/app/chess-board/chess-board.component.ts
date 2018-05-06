@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Square} from '../models/square.model';
 import {Coordinates} from '../models/coordinates.model';
 import {PieceImageData, PieceData, Colors, relativePath} from '../app-data';
@@ -9,7 +9,8 @@ import {
   getMovesForPawn,
   getMovesForQueen,
   getMovesForRook
-} from '../services/move.services';
+} from '../helpers/move.helper';
+import {SocketService} from '../move-comms.service';
 
 
 @Component({
@@ -19,6 +20,7 @@ import {
 })
 export class ChessBoardComponent implements OnInit {
 
+  @Input() id: number;
   objectKeys = Object.keys;
 
   // used to allow looping through the boardState object
@@ -34,6 +36,30 @@ export class ChessBoardComponent implements OnInit {
   hasMovedTracker: boolean;
   gameState;
 
+
+  constructor(private socket: SocketService) {
+    this.setUpBoardAsWhite();
+  }
+
+  ngOnInit() {
+    this.socket.messages.subscribe(msg => {
+      console.log(msg.type);
+    });
+  }
+
+  setUpBoardAsWhite() {
+    let counter = 1;
+    this.squareColorTracker = Colors.BLACK;
+    for (let y = 8; y > 0; y--) {
+      this.squareColorTracker === Colors.BLACK ? this.squareColorTracker = Colors.WHITE : this.squareColorTracker = Colors.BLACK;
+      for (let x = 1; x < 9; x++) {
+        const coordinates = new Coordinates(x, y);
+        (this.assignSquare(counter, coordinates, this.squareColorTracker));
+        counter++;
+        this.squareColorTracker === Colors.BLACK ? this.squareColorTracker = Colors.WHITE : this.squareColorTracker = Colors.BLACK;
+      }
+    }
+  }
 
   assignSquare(counter, coordinates, squareColor) {
     const coordinateString = coordinates.x + ' ' + coordinates.y;
@@ -82,30 +108,7 @@ export class ChessBoardComponent implements OnInit {
     }
   }
 
-  constructor() {
-    this.setUpBoardAsWhite();
-  }
-
-  ngOnInit() {
-
-  }
-
-  setUpBoardAsWhite() {
-    let counter = 1;
-    this.squareColorTracker = Colors.BLACK;
-    for (let y = 8; y > 0; y--) {
-      this.squareColorTracker === Colors.BLACK ? this.squareColorTracker = Colors.WHITE : this.squareColorTracker = Colors.BLACK;
-      for (let x = 1; x < 9; x++) {
-        const coordinates = new Coordinates(x, y);
-        (this.assignSquare(counter, coordinates, this.squareColorTracker));
-        counter++;
-        this.squareColorTracker === Colors.BLACK ? this.squareColorTracker = Colors.WHITE : this.squareColorTracker = Colors.BLACK;
-      }
-    }
-  }
-
-
-  onSquareClicked(square) {
+  onSquareClicked(square: Square) {
     console.log(square);
     if (this.squareSelected) {
       this.squareSelected.squareColor = this.squareSelected.squareColorSaver;
@@ -118,6 +121,14 @@ export class ChessBoardComponent implements OnInit {
       }
       this.movePiece(this.squareSelected, square);
       this.isCheck();
+      this.socket.sendMsg({
+        type: 'move',
+        payload: {
+          id: 1,
+          mover: this.squareSelected.coordinate.x + ' ' + this.squareSelected.coordinate.y,
+          destination: square.coordinate.x + ' ' + square.coordinate.y
+        }
+      });
       this.endTurn();
     }
     this.resetPossibleMoves();
