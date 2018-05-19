@@ -10,6 +10,7 @@ export class Square {
     public pieceColor: string,
     public pieceType: number,
     public pieceHasMoved: boolean,
-    public isEligibleToMoveTo: boolean
+    public isEligibleToMoveTo: boolean,
+    public isCastlingIfMovedTo: boolean
   ) {}
 }

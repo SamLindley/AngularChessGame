@@ -2,15 +2,24 @@
 <div class="site-container">
 
   <div *ngIf="gameStatus === 'idle'">
-    <button (click)="findGame()">Find Game</button>
+    <app-lobby-screen></app-lobby-screen>
+    <div class="game-button" (click)="findGame()">Play Chess!</div>
   </div>
 
   <div *ngIf="gameStatus === 'waiting'">
+    <app-lobby-screen></app-lobby-screen>
     WAITING
   </div>
 
   <div class="chess-container" *ngIf="gameStatus === 'gameStart'">
-    <app-chess-board ></app-chess-board>
+    <div class="status-bar">
+      {{gameResult}}
+      <div *ngIf="gameResult">
+        <div class="game-button" (click)="findGame()">Play Again!</div>
+      </div>
+    </div>
+    <app-chess-board [clientColor]="colorAssigned" [id]="idAssigned" (gameEnded)="displayResults($event)"></app-chess-board>
+    <div class="whitespace-right"></div>
   </div>
 
 </div>

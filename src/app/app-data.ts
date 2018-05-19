@@ -27,8 +27,9 @@ export const PieceData = {
 };
 
 export const Colors = {
-  BLACK: 'grey',
+  BLACK: 'black',
   WHITE: 'white',
-  SELECTED: 'yellow'
+  SELECTED: 'yellow',
+  GREY: 'grey'
 };
 
