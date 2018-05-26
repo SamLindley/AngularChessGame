@@ -54,12 +54,10 @@ export class ChessBoardComponent implements OnInit {
   hasMovedTracker: boolean;
 
   constructor(private socket: SocketService) {
-    console.log(this.clientColor);
   }
 
   ngOnInit() {
     this.socket.messages.subscribe(msg => {
-      console.log(msg);
       if (msg.type === 'move') {
 
         const mover = this.boardState[msg.data.payload.mover];
@@ -77,16 +75,8 @@ export class ChessBoardComponent implements OnInit {
   }
 
   endGame(winner: boolean) {
-    console.log('game ended');
     this.clientColor = null;
-    console.log(winner);
-    if (winner) {
-      this.gameEnded.emit(true);
-      console.log('winner');
-    } else {
-      this.gameEnded.emit(false);
-      console.log('loser');
-    }
+    this.gameEnded.emit(winner);
   }
 
   setUpBoardAsWhite() {
@@ -186,18 +176,27 @@ export class ChessBoardComponent implements OnInit {
         if (this.squareSelected.pieceType === PieceData.ROOK) {
           if (this.squareSelected.coordinate.x === 1) {
             this.qRookMoved = true;
-          } else {this.kRookMoved = true; }
+          } else {
+            this.kRookMoved = true;
+          }
         }
 
         if (square.isCastlingIfMovedTo) {
           if (square.coordinate.y === 1 && square.coordinate.x === 3) {
             this.movePiece(this.boardState['1 1'], this.boardState['4 1']);
+            this.sendCastleInfo('1 1', '4 1');
           } else if (square.coordinate.y === 1 && square.coordinate.x === 7) {
             this.movePiece(this.boardState['8 1'], this.boardState['6 1']);
+            this.sendCastleInfo('8 1', '6 1');
+
           } else if (square.coordinate.y === 8 && square.coordinate.x === 3) {
             this.movePiece(this.boardState['1 8'], this.boardState['4 8']);
+            this.sendCastleInfo('1 8', '4 8');
+
           } else {
             this.movePiece(this.boardState['8 8'], this.boardState['6 8']);
+            this.sendCastleInfo('8 8', '6 8');
+
           }
         }
 
@@ -266,6 +265,17 @@ export class ChessBoardComponent implements OnInit {
     }
   }
 
+  sendCastleInfo(mover, destination) {
+    this.socket.sendMsg(new SocketMessage(
+      'move',
+      {
+        id: this.id,
+        mover: mover,
+        destination: destination,
+        isCheckmate: false
+      }));
+  }
+
   castlingCheck() {
     let kingsideWayIsClear = true;
     let queensideWayIsClear = true;
@@ -330,8 +340,8 @@ export class ChessBoardComponent implements OnInit {
         });
       }
     });
-    resultsOfMoves.forEach(move => {
-      if (move) {
+    resultsOfMoves.forEach(result => {
+      if (result) {
         isCheckmate = false;
       }
     });
@@ -372,8 +382,7 @@ export class ChessBoardComponent implements OnInit {
       case PieceData.QUEEN:
         return getMovesForQueen(square, this.boardState);
       case PieceData.KING:
-        const movesForKing = getMovesForKing(square, this.boardState);
-        return movesForKing;
+        return getMovesForKing(square, this.boardState);
     }
   }
 
@@ -452,7 +461,6 @@ export class ChessBoardComponent implements OnInit {
     this.squareKeys.forEach(square => {
       if (this.boardState[square].isOccupied && this.boardState[square].pieceColor === this.clientColor) {
         const moves = this.findPossibleMoves(this.boardState[square]);
-        console.log(this.boardState);
         moves.forEach(move => {
           if (this.boardState[move].pieceType === PieceData.KING) {
             isCheck = true;

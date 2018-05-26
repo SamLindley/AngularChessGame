@@ -35,16 +35,16 @@
 }
 
 .status-bar {
-  height: 640px;
-  width: 200px;
+  height: 480px;
+  width: 160px;
   background: #386FA4;
   border-radius: 5px;
   margin-right: 50px;
 }
 
 .whitespace-right {
-  height: 640px;
-  width: 200px;
+  height: 480px;
+  width: 160px;
   background: white;
   margin-left: 50px;
 }

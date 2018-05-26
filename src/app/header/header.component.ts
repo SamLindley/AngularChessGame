@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import {LoginService} from '../services/login.service';
+import {HttpService} from '../services/http.service';
 
 @Component({
   selector: 'app-header',
@@ -8,22 +9,32 @@ import {LoginService} from '../services/login.service';
 })
 export class HeaderComponent implements OnInit {
 
-  constructor(private loginService: LoginService) { }
+  user;
+
+  constructor(private loginService: LoginService, private http: HttpService) { }
 
   ngOnInit() {
   }
 
-  logIn() {
-    this.loginService.login();
-    console.log(this.loginService.loginStatus());
+  logIn(email, password) {
+    this.http.logIn({
+      user: {
+        email: email,
+        password: password
+      }
+    }).subscribe(data => {
+      console.log(data);
+      this.loginService.login(data);
+      this.user = data;
+    });
+
   }
 
   logOut() {
     this.loginService.logout();
-    console.log(this.loginService.loginStatus());
   }
 
   checkStatus() {
-    console.log(this.loginService.loginStatus());
+    return this.loginService.loginStatus();
   }
 }

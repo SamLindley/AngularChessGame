@@ -4,21 +4,28 @@ import { Injectable } from '@angular/core';
 export class LoginService {
 
   loggedIn;
+  user;
 
   constructor() {
     this.loggedIn = false;
   }
 
-  login() {
+  login(user) {
     this.loggedIn = true;
+    this.user = user;
   }
 
   logout() {
     this.loggedIn = false;
+    this.user = null;
   }
 
   loginStatus() {
     return this.loggedIn;
+  }
+
+  getUser() {
+    return this.user;
   }
 
 }

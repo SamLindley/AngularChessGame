@@ -13,6 +13,7 @@
 
   <div class="chess-container" *ngIf="gameStatus === 'gameStart'">
     <div class="status-bar">
+      {{opponent}}
       {{gameResult}}
       <div *ngIf="gameResult">
         <div class="game-button" (click)="findGame()">Play Again!</div>

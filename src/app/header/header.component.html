@@ -1,10 +1,18 @@
 <div class="header">
   <span class="logo">Chess</span>
   <span class="login">
-    <div class="login-form">
-      <input class="input-form" type="text" >
-      <input class="input-form" type="text">
-      <span (click)="logIn()">LOG IN</span>
+    <div class="login-form" *ngIf="!checkStatus()">
+      <input #email class="input-form" type="text">
+      <input #password class="input-form" type="text">
+      <span (click)="logIn(email.value, password.value)">LOG IN</span>
     </div>
+    <div *ngIf="checkStatus()">
+      Welcome {{user.email}}
+      <div (click)="logOut()">
+        Log Out
+      </div>
+    </div>
+
+
   </span>
 </div>

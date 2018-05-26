@@ -1,6 +1,6 @@
 .square {
-  height: 80px;
-  width: 80px;
+  height: 60px;
+  width: 60px;
 
   display: flex;
   justify-content: center;
